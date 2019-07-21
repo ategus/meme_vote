@@ -6,7 +6,6 @@ var memeArray = [
 ];
 */
 const contractSource = `
-
   contract MemeVote = 
 
   record meme = 
@@ -15,23 +14,23 @@ const contractSource = `
       name           : string,
       voteCount      : int }
 
-  record state = {
-    memes : map(int, meme),
-    memesLength : int}
+  record state = 
+    { memes      : map(int, meme),
+      memesLength : int }
 
-  entrypoint init() = { 
-    memes = {},
-    memesLength = 0}
+  entrypoint init() = 
+    { memes = {},
+      memesLength = 0 }
 
-  entrypoint getMeme(index: int) : meme =
+  entrypoint getMeme(index : int) : meme =
     switch(Map.lookup(index, state.memes))
-      None => abort("There was no meme with this index registered.")
+      None    => abort("There was no meme with this index registered.")
       Some(x) => x
     
   stateful entrypoint registerMeme(url' : string, name' : string) =
     let meme = { creatorAddress = Call.caller, url = url', name = name', voteCount = 0}
     let index = getMemesLength() + 1
-    put(state { memes[index] = meme, memesLength = index})
+    put(state{ memes[index] = meme, memesLength = index })
     
   entrypoint getMemesLength() : int =
     state.memesLength
@@ -40,14 +39,14 @@ const contractSource = `
     let meme = getMeme(index)
     Chain.spend(meme.creatorAddress, Call.value)
     let updatedVoteCount = meme.voteCount + Call.value
-    let updatedMemes = state.memes { [index].voteCount = updatedVoteCount }
+    let updatedMemes = state.memes{ [index].voteCount = updatedVoteCount }
     put(state{ memes = updatedMemes })
     `;
 
 const contractAddress = 'ct_ndGUPAmujkRLE46Qsn6WYApyJ5w5XYQe5XfbfQZBLAGgzQVNx';
 var client = null;
 var memeArray = [];
-var memeLength = 0;
+var memesLength = 0;
 
 function renderMemes() {
   memeArray = memeArray.sort(function(a,b){return b.votes-a.votes})
@@ -61,9 +60,10 @@ window.addEventListener('load', async () => {
   $("#loader").show();
 
   client = await Ae.Aepp();
+
   const contract = await client.getContractInstance(contractSource, {contractAddress});
   const calledGet = await contract.call('getMemesLength', [], {callStatic: true}).catch(e => console.error(e));
-  console.log('decodedGet', decodedGet);
+  console.log('calledGet', calledGet);
 
   const decodedGet = await calledGet.decode().catch(e => console.error(e));
   console.log('decodedGet', decodedGet);
@@ -73,17 +73,17 @@ window.addEventListener('load', async () => {
   $("#loader").hide();
 });
 
-jQuery("#memeBody").on("click",".voteBtn", async function(event){
-  const value =$(this).siblings('input').val();
+jQuery("#memeBody").on("click", ".voteBtn", async function(event){
+  const value = $(this).siblings('input').val();
   const dataIndex = event.target.id;
   const foundIndex = memeArray.findIndex(meme => meme.index == dataIndex);
-  memeArray[foundIndex].votes += parseInt(value,10);
+  memeArray[foundIndex].votes += parseInt(value, 10);
   renderMemes();
-})
+});
 
 $('#registerBtn').click(async function(){
   var name = ($('#regName').val()),
-      url  = ($('#regUrl').val());
+      url = ($('#regUrl').val());
 
   memeArray.push({
     creatorName: name,
@@ -91,5 +91,6 @@ $('#registerBtn').click(async function(){
     index: memeArray.length+1,
     votes: 0
   })
+  
   renderMemes();
 });
